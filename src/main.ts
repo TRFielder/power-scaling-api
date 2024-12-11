@@ -10,7 +10,7 @@ async function bootstrap() {
             "An experiment with NestJS for power scaling fictional characters"
         )
         .setVersion("0.0.1")
-        .addTag("characters")
+        .addTag("Characters")
         .build()
 
     const documentFactory = () => SwaggerModule.createDocument(app, config)
