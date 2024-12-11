@@ -2,7 +2,7 @@ import { Controller, Get } from "@nestjs/common"
 import { CharactersService } from "./characters.service"
 import { Character } from "@prisma/client"
 
-@Controller("Characters")
+@Controller("characters")
 export class CharactersController {
     constructor(private readonly characterService: CharactersService) {}
 
