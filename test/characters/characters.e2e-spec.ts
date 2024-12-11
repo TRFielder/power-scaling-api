@@ -3,6 +3,7 @@ import type { INestApplication } from "@nestjs/common"
 import * as request from "supertest"
 import { CharactersModule } from "../../src/characters/characters.module"
 import { CharactersService } from "../../src/characters/characters.service"
+import { CreateCharacterDto } from "src/characters/dto/create-character.dto"
 
 describe("Characters Controller (e2e)", () => {
     let app: INestApplication
@@ -36,6 +37,13 @@ describe("Characters Controller (e2e)", () => {
                 score: 1,
             },
         ],
+
+        addNewCharacter: (data: CreateCharacterDto) => {
+            return {
+                name: "Gohan",
+                imageUrl: "e2etesturl",
+            }
+        },
     }
 
     beforeEach(async () => {
@@ -55,6 +63,19 @@ describe("Characters Controller (e2e)", () => {
             .get("/characters")
             .expect(200)
             .expect(charactersService.getAllCharacters())
+    })
+
+    it("/characters (POST)", () => {
+        const character: CreateCharacterDto = {
+            name: "Gohan",
+            imageUrl: "unittesturl",
+        }
+
+        return request(app.getHttpServer())
+            .post("/characters")
+            .send(character)
+            .expect(201)
+            .expect(charactersService.addNewCharacter(character))
     })
 
     it("/characters/sorted (GET)", () => {

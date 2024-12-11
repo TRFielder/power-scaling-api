@@ -3,6 +3,7 @@ import { CharactersController } from "./characters.controller"
 import { CharactersService } from "./characters.service"
 import { Character } from "@prisma/client"
 import { PrismaModule } from "../prisma/prisma.module"
+import { CreateCharacterDto } from "./dto/create-character.dto"
 
 describe("CharactersController", () => {
     let controller: CharactersController
@@ -72,5 +73,25 @@ describe("CharactersController", () => {
         ).mockImplementation(async () => result)
 
         expect(await controller.getCharactersOrderedByScore()).toBe(result)
+    })
+
+    it("Should return the newly created character when calling add new character", async () => {
+        const result: Character = {
+            id: 1,
+            name: "Gohan",
+            imageUrl: "unittesturl",
+            score: 0,
+        }
+
+        const input: CreateCharacterDto = {
+            name: "Gohan",
+            imageUrl: "unittesturl",
+        }
+
+        jest.spyOn(controller, "addNewCharacter").mockImplementation(
+            async () => result
+        )
+
+        expect(await controller.addNewCharacter(input)).toBe(result)
     })
 })

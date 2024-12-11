@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
-import { Character } from "@prisma/client"
+import { Character, Prisma } from "@prisma/client"
 
 @Injectable()
 export class CharactersService {
@@ -17,5 +17,14 @@ export class CharactersService {
         return this.prisma.character.findMany({
             orderBy: [{ score: "desc" }],
         })
+    }
+
+    async addNewCharacter(
+        data: Prisma.CharacterCreateInput
+    ): Promise<Character> {
+        this.logger.log(
+            `Request made to create a character with details ${JSON.stringify(data)}`
+        )
+        return this.prisma.character.create({ data })
     }
 }
