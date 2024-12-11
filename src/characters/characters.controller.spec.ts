@@ -49,4 +49,28 @@ describe("CharactersController", () => {
 
         expect(await controller.getAllCharacters()).toBe(result)
     })
+
+    it("Should return an array of characters when calling get characters ordered by score", async () => {
+        const result: Character[] = [
+            {
+                id: 2,
+                name: "Gohan",
+                imageUrl: "http://google.com",
+                score: 3,
+            },
+            {
+                id: 1,
+                name: "Goku",
+                imageUrl: "http://google.com",
+                score: 1,
+            },
+        ]
+
+        jest.spyOn(
+            controller,
+            "getCharactersOrderedByScore"
+        ).mockImplementation(async () => result)
+
+        expect(await controller.getCharactersOrderedByScore()).toBe(result)
+    })
 })

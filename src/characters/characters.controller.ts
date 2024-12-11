@@ -10,4 +10,9 @@ export class CharactersController {
     async getAllCharacters(): Promise<Character[]> {
         return this.characterService.getAllCharacters()
     }
+
+    @Get("sorted")
+    async getCharactersOrderedByScore(): Promise<Character[]> {
+        return this.characterService.getCharactersOrderedByScore()
+    }
 }

@@ -21,6 +21,21 @@ describe("Characters Controller (e2e)", () => {
                 score: 3,
             },
         ],
+
+        getCharactersOrderedByScore: () => [
+            {
+                id: 2,
+                name: "Gohan",
+                imageUrl: "http://google.com",
+                score: 3,
+            },
+            {
+                id: 1,
+                name: "Goku",
+                imageUrl: "http://google.com",
+                score: 1,
+            },
+        ],
     }
 
     beforeEach(async () => {
@@ -40,5 +55,12 @@ describe("Characters Controller (e2e)", () => {
             .get("/characters")
             .expect(200)
             .expect(charactersService.getAllCharacters())
+    })
+
+    it("/characters/sorted (GET)", () => {
+        return request(app.getHttpServer())
+            .get("/characters/sorted")
+            .expect(200)
+            .expect(charactersService.getCharactersOrderedByScore())
     })
 })
