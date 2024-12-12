@@ -1,87 +1,75 @@
 import { Test, type TestingModule } from "@nestjs/testing"
-import type { INestApplication } from "@nestjs/common"
+import { type INestApplication } from "@nestjs/common"
 import * as request from "supertest"
-import { CharactersModule } from "../../src/characters/characters.module"
-import { CharactersService } from "../../src/characters/characters.service"
-import { CreateCharacterDto } from "src/characters/dto/create-character.dto"
+import { AppModule } from "../../src/app.module"
+import { PrismaService } from "../../src/prisma/prisma.service"
+import { Character } from "@prisma/client"
 
-describe("Characters Controller (e2e)", () => {
+describe("Characters (e2e)", () => {
     let app: INestApplication
-    const charactersService = {
-        getAllCharacters: () => [
-            {
-                id: 1,
-                name: "Goku",
-                imageUrl: "http://google.com",
-                score: 1,
-            },
-            {
-                id: 2,
-                name: "Gohan",
-                imageUrl: "http://google.com",
-                score: 3,
-            },
-        ],
+    let prisma: PrismaService
 
-        getCharactersOrderedByScore: () => [
-            {
-                id: 2,
-                name: "Gohan",
-                imageUrl: "http://google.com",
-                score: 3,
-            },
-            {
-                id: 1,
-                name: "Goku",
-                imageUrl: "http://google.com",
-                score: 1,
-            },
-        ],
+    let characters: Character
 
-        addNewCharacter: (data: CreateCharacterDto) => {
-            return {
-                name: "Gohan",
-                imageUrl: "e2etesturl",
-            }
-        },
-    }
+    const characterShape = expect.objectContaining({
+        id: expect.any(Number),
+        name: expect.any(String),
+        imageUrl: expect.any(String),
+        score: expect.any(Number),
+    })
 
-    beforeEach(async () => {
+    beforeAll(async () => {
+        // Entire API for testing, including db connection
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [CharactersModule],
-        })
-            .overrideProvider(CharactersService)
-            .useValue(charactersService)
-            .compile()
+            imports: [AppModule],
+        }).compile()
 
         app = moduleFixture.createNestApplication()
+        prisma = app.get<PrismaService>(PrismaService)
+
+        // Don't know what this is for yet, it's from class-validator if we need it
+        // useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
+        // app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
+
         await app.init()
+
+        // Seed db with test data, just 3 entries
+        console.log("🔧 Creating entries in character table")
+        await prisma.character.createMany({
+            data: [
+                {
+                    name: "Goku",
+                    imageUrl: "test-url-1",
+                },
+                {
+                    name: "Gohan",
+                    imageUrl: "test-url-2",
+                },
+                {
+                    name: "Vegeta",
+                    imageUrl: "test-url-3",
+                },
+            ],
+        })
+
+        console.log("✅ Character table successfully populated!")
     })
 
-    it("/characters (GET)", () => {
-        return request(app.getHttpServer())
-            .get("/characters")
-            .expect(200)
-            .expect(charactersService.getAllCharacters())
+    describe("GET /characters", () => {
+        it("Returns a list of characters", async () => {
+            const { status, body } = await request(app.getHttpServer()).get(
+                "/characters"
+            )
+
+            expect(status).toBe(200)
+
+            expect(body).toStrictEqual(expect.arrayContaining([characterShape]))
+        })
     })
 
-    it("/characters (POST)", () => {
-        const character: CreateCharacterDto = {
-            name: "Gohan",
-            imageUrl: "unittesturl",
-        }
-
-        return request(app.getHttpServer())
-            .post("/characters")
-            .send(character)
-            .expect(201)
-            .expect(charactersService.addNewCharacter(character))
-    })
-
-    it("/characters/sorted (GET)", () => {
-        return request(app.getHttpServer())
-            .get("/characters/sorted")
-            .expect(200)
-            .expect(charactersService.getCharactersOrderedByScore())
+    afterAll(async () => {
+        // Clean up the character table, remove everything after tests are finished
+        await prisma.character.deleteMany()
     })
 })

@@ -9,7 +9,7 @@ async function bootstrap() {
         .setDescription(
             "An experiment with NestJS for power scaling fictional characters"
         )
-        .setVersion("0.0.1")
+        .setVersion("0.0.2")
         .addTag("Characters")
         .build()
 

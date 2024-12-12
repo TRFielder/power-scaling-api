@@ -17,7 +17,9 @@
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-        "test:e2e": "jest --config ./test/jest-e2e.json"
+        "test:e2e": "pnpm run docker:up && pnpm exec dotenv -e .env.test.local -- pnpm exec prisma migrate deploy && pnpm exec dotenv -e .env.test.local -- jest -i --config ./test/jest-e2e.json",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down"
     },
     "dependencies": {
         "@biomejs/biome": "^1.9.4",
@@ -27,6 +29,7 @@
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/swagger": "^8.1.0",
         "@prisma/client": "6.0.1",
+        "dotenv-cli": "^7.4.4",
         "reflect-metadata": "^0.2.0",
         "rxjs": "^7.8.1"
     },
