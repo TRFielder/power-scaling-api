@@ -1,9 +1,12 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Get,
     HttpException,
     HttpStatus,
+    Param,
+    Patch,
     Post,
 } from "@nestjs/common"
 import { CharactersService } from "./characters.service"
@@ -44,5 +47,29 @@ export class CharactersController {
                 { cause: error }
             )
         }
+    }
+
+    @Patch(":id/up")
+    @ApiOperation({ summary: "Increment character's score by 5" })
+    async incrementScoreForCharacter(
+        @Param("id") id: string
+    ): Promise<Character> {
+        if (Number.isNaN(Number(id)))
+            throw new BadRequestException("ID was not parsed as a number")
+        return await this.characterService.incrementScore({
+            where: { id: Number(id) },
+        })
+    }
+
+    @Patch(":id/down")
+    @ApiOperation({ summary: "Decrement character's score by 5" })
+    async decrementScoreForCharacter(
+        @Param("id") id: string
+    ): Promise<Character> {
+        if (Number.isNaN(Number(id)))
+            throw new BadRequestException("ID was not parsed as a number")
+        return await this.characterService.decrementScore({
+            where: { id: Number(id) },
+        })
     }
 }
