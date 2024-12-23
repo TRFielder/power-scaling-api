@@ -99,20 +99,22 @@ describe("Characters (e2e)", () => {
             const file = "temp-test-image.png"
             writeFileSync(file, binaryData)
 
-            const { status, body } = await request(app.getHttpServer())
-                .post("/characters")
-                .field("name", characterName)
-                .attach("file", file)
+            try {
+                const { status, body } = await request(app.getHttpServer())
+                    .post("/characters")
+                    .field("name", characterName)
+                    .attach("file", file)
 
-            // Expect status code 201
-            expect(status).toEqual(HttpStatus.CREATED)
-            expect(body).toHaveProperty("id")
-            expect(body).toHaveProperty("imageUrl", "mock-image-url")
-            expect(body).toHaveProperty("score", 0)
-            expect(characterService.uploadImage).toHaveBeenCalledTimes(1)
-
-            // Clean up temporary file
-            unlinkSync(file)
+                // Expect status code 201
+                expect(status).toEqual(HttpStatus.CREATED)
+                expect(body).toHaveProperty("id")
+                expect(body).toHaveProperty("imageUrl", "mock-image-url")
+                expect(body).toHaveProperty("score", 0)
+                expect(characterService.uploadImage).toHaveBeenCalledTimes(1)
+            } finally {
+                // Clean up temporary file
+                unlinkSync(file)
+            }
         })
 
         it("Gives the correct error when the name property is missing", async () => {
