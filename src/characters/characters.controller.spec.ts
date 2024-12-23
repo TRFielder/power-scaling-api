@@ -5,7 +5,6 @@ import { Character } from "@prisma/client"
 import { PrismaModule } from "../prisma/prisma.module"
 import { CreateCharacterDto } from "./dto/create-character.dto"
 import { Readable } from "node:stream"
-import { mock } from "node:test"
 
 describe("CharactersController", () => {
     let controller: CharactersController

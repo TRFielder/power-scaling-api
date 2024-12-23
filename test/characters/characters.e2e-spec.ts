@@ -4,9 +4,8 @@ import * as request from "supertest"
 import { AppModule } from "../../src/app.module"
 import { PrismaService } from "../../src/prisma/prisma.service"
 import { Character } from "@prisma/client"
-import * as path from "node:path"
 import { CharactersService } from "../../src/characters/characters.service"
-import { createReadStream, unlinkSync, writeFileSync } from "node:fs"
+import { unlinkSync, writeFileSync } from "node:fs"
 import { faker } from "@faker-js/faker"
 
 describe("Characters (e2e)", () => {
