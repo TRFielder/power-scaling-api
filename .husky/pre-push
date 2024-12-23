@@ -1,0 +1,9 @@
+echo "Linting"
+pnpm lint
+echo "Linting complete"
+echo "Running unit tests"
+pnpm test
+echo "Unit tests complete"
+echo "Running e2e tests"
+pnpm test:e2e
+echo "e2e tests complete, committing"
