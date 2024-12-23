@@ -8,11 +8,14 @@ import {
     Param,
     Patch,
     Post,
+    UploadedFile,
+    UseInterceptors,
 } from "@nestjs/common"
 import { CharactersService } from "./characters.service"
 import { Character } from "@prisma/client"
-import { ApiOperation } from "@nestjs/swagger"
+import { ApiBody, ApiConsumes, ApiOperation } from "@nestjs/swagger"
 import { CreateCharacterDto } from "./dto/create-character.dto"
+import { FileInterceptor } from "@nestjs/platform-express"
 
 @Controller("characters")
 export class CharactersController {
@@ -31,17 +34,45 @@ export class CharactersController {
     }
 
     @Post()
+    @UseInterceptors(FileInterceptor("file"))
     @ApiOperation({ summary: "Add new character" })
+    @ApiConsumes("multipart/form-data")
+    @ApiBody({
+        description: "New character data",
+        schema: {
+            type: "object",
+            properties: {
+                name: { type: "string" },
+                file: {
+                    type: "string",
+                    format: "binary",
+                },
+            },
+        },
+    })
     async addNewCharacter(
+        @UploadedFile() file: Express.Multer.File,
         @Body() character: CreateCharacterDto
     ): Promise<Character> {
         try {
-            return await this.characterService.addNewCharacter(character)
+            if (!file)
+                throw new HttpException(
+                    "A file upload is required",
+                    HttpStatus.BAD_REQUEST
+                )
+            // Upload image to supabase bucket
+            const imageUrl = await this.characterService.uploadImage(file)
+
+            const characterWithImage = { ...character, imageUrl }
+
+            return await this.characterService.addNewCharacter(
+                characterWithImage
+            )
         } catch (error) {
             throw new HttpException(
                 {
                     status: HttpStatus.BAD_REQUEST,
-                    error: "Check your input",
+                    error: error.message,
                 },
                 HttpStatus.BAD_REQUEST,
                 { cause: error }

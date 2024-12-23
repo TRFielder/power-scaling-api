@@ -4,6 +4,8 @@ import { CharactersService } from "./characters.service"
 import { Character } from "@prisma/client"
 import { PrismaModule } from "../prisma/prisma.module"
 import { CreateCharacterDto } from "./dto/create-character.dto"
+import { Readable } from "node:stream"
+import { mock } from "node:test"
 
 describe("CharactersController", () => {
     let controller: CharactersController
@@ -85,13 +87,25 @@ describe("CharactersController", () => {
 
         const input: CreateCharacterDto = {
             name: "Gohan",
-            imageUrl: "unittesturl",
+        }
+
+        const mockFile: Express.Multer.File = {
+            fieldname: "image",
+            originalname: "test-image.png",
+            encoding: "7bit",
+            mimetype: "image/png",
+            size: 1024,
+            buffer: Buffer.from("fake-binary-content"),
+            stream: Readable.from(Buffer.from("fake-binary-content")),
+            destination: "uploads/",
+            filename: "test-image.png",
+            path: "uploads/test-image.png",
         }
 
         jest.spyOn(controller, "addNewCharacter").mockImplementation(
             async () => result
         )
 
-        expect(await controller.addNewCharacter(input)).toBe(result)
+        expect(await controller.addNewCharacter(mockFile, input)).toBe(result)
     })
 })

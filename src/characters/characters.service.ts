@@ -1,10 +1,22 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import {
+    HttpException,
+    HttpStatus,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { Character, Prisma } from "@prisma/client"
+import { createClient } from "@supabase/supabase-js"
+import { randomUUID } from "node:crypto"
 
 @Injectable()
 export class CharactersService {
     private readonly logger = new Logger(CharactersService.name)
+    private readonly supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_KEY
+    )
     constructor(private readonly prisma: PrismaService) {}
 
     async getAllCharacters(): Promise<Character[]> {
@@ -80,5 +92,38 @@ export class CharactersService {
                 },
             },
         })
+    }
+
+    // Upload an image file for a character
+    async uploadImage(file: Express.Multer.File) {
+        try {
+            // Generate a unique file name
+            const filename = `${randomUUID()}-${file.originalname}`
+
+            // Upload the file to the storage bucket
+            const { error } = await this.supabase.storage
+                .from(process.env.BUCKET_NAME)
+                .upload(filename, file.buffer, {
+                    contentType: file.mimetype,
+                })
+
+            if (error)
+                throw new HttpException(
+                    `Failed to upload file: ${error.message}`,
+                    HttpStatus.INTERNAL_SERVER_ERROR
+                )
+
+            // Retrieve the public URL of the uploaded file, and send it back to be added to the db
+            const response = this.supabase.storage
+                .from(process.env.BUCKET_NAME)
+                .getPublicUrl(filename)
+
+            return response.data.publicUrl
+        } catch (error) {
+            throw new HttpException(
+                `Upload failed: ${error.message}`,
+                HttpStatus.INTERNAL_SERVER_ERROR
+            )
+        }
     }
 }
