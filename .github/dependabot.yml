@@ -7,7 +7,5 @@ updates:
       ignore:
           - dependency-name: "eslint"
             versions: ["9"]
-      reviewers:
-          - "TRFielder"
       assignees:
           - "TRFielder"
