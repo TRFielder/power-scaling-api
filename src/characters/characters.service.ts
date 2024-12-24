@@ -67,6 +67,43 @@ export class CharactersService {
         return charactersWithSignedImageUrls
     }
 
+    async getPairOfCharacters(): Promise<CharacterDto[]> {
+        this.logger.log("Request made to get a pair of characters")
+        const characterIDs = await this.prisma.character.findMany({
+            select: {
+                id: true,
+            },
+        })
+
+        if (characterIDs.length < 2) {
+            throw new HttpException(
+                `Unable to generate pair. Not enough records were found (expected 2, found ${characterIDs.length}`,
+                HttpStatus.NOT_FOUND
+            )
+        }
+
+        const IDs = characterIDs.map((character) => character.id)
+
+        // Shuffle the list of IDs
+        IDs.sort(() => 0.5 - Math.random())
+
+        const pairOfIds = IDs.slice(0, 2)
+
+        const pair = await this.prisma.character.findMany({
+            where: {
+                id: {
+                    in: pairOfIds,
+                },
+            },
+        })
+
+        const pairWithSignedImageUrls: Promise<CharacterDto[]> = Promise.all(
+            pair.map(async (character) => this.getImageForCharacter(character))
+        )
+
+        return pairWithSignedImageUrls
+    }
+
     async addNewCharacter(
         data: Prisma.CharacterCreateInput
     ): Promise<Character> {

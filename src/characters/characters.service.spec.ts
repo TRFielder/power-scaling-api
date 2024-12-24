@@ -5,10 +5,12 @@ import { PrismaModule } from "../prisma/prisma.module"
 import { SupabaseModule } from "../supabase/supabase.module"
 import { SupabaseService } from "../supabase/supabase.service"
 import { Character } from "@prisma/client"
+import { PrismaService } from "../prisma/prisma.service"
 
 describe("CharactersService", () => {
     let service: CharactersService
     let supabase: SupabaseService
+    let prisma: PrismaService
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -19,6 +21,7 @@ describe("CharactersService", () => {
 
         service = module.get<CharactersService>(CharactersService)
         supabase = module.get<SupabaseService>(SupabaseService)
+        prisma = module.get<PrismaService>(PrismaService)
 
         // Set up mocks
         jest.spyOn(supabase, "getSignedUrl").mockImplementation(
@@ -71,5 +74,41 @@ describe("CharactersService", () => {
         expect(result).toBeDefined()
         expect(result).toHaveProperty("imageUrl")
         expect(result).not.toHaveProperty("imageFileName")
+    })
+
+    it("Should return a pair of characters when calling getPairOfCharacters", async () => {
+        // Mock the return value of finding IDs in the db
+        jest.spyOn(prisma.character, "findMany").mockResolvedValueOnce([
+            //@ts-expect-error This is deliberate as we are only calling for IDs here, nothing more
+            { id: 1 },
+            //@ts-expect-error This is deliberate as we are only calling for IDs here, nothing more
+            { id: 2 },
+            //@ts-expect-error This is deliberate as we are only calling for IDs here, nothing more
+            { id: 3 },
+            //@ts-expect-error This is deliberate as we are only calling for IDs here, nothing more
+            { id: 4 },
+        ])
+
+        // Mock the return value of finding a pair in the db
+        jest.spyOn(prisma.character, "findMany").mockResolvedValueOnce([
+            {
+                id: 1,
+                name: "Character 1",
+                imageFileName: "image1.png",
+                score: 0,
+            },
+            {
+                id: 2,
+                name: "Character 2",
+                imageFileName: "image2.png",
+                score: 0,
+            },
+        ])
+
+        const result = await service.getPairOfCharacters()
+
+        expect(result.length).toBe(2)
+        expect(result[0]).toHaveProperty("imageUrl")
+        expect(result[1]).toHaveProperty("imageUrl")
     })
 })

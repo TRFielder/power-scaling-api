@@ -34,6 +34,12 @@ export class CharactersController {
         return this.characterService.getCharactersOrderedByScore()
     }
 
+    @Get("pair")
+    @ApiOperation({ summary: "Get a random pair of characters" })
+    async getPairOfCharacters(): Promise<CharacterDto[]> {
+        return this.characterService.getPairOfCharacters()
+    }
+
     @Post()
     @UseInterceptors(FileInterceptor("file"))
     @ApiOperation({ summary: "Add new character" })

@@ -153,6 +153,21 @@ describe("Characters (e2e)", () => {
         })
     })
 
+    describe("Get pair of characters", () => {
+        it("Returns a pair of characters with image URLs", async () => {
+            const { status, body } = await request(app.getHttpServer()).get(
+                "/characters/pair"
+            )
+
+            expect(status).toBe(HttpStatus.OK)
+            expect(body).toHaveLength(2)
+            const hasImageUrl = body.every(
+                (character) => "imageUrl" in character
+            )
+            expect(hasImageUrl).toBe(true)
+        })
+    })
+
     afterAll(async () => {
         // Clean up the character table, remove everything after tests are finished
         console.log("📣 Attempting to clean up the character table")
