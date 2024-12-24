@@ -1,0 +1,47 @@
+# Run unit tests on each PR
+
+name: Run Unit and E2E Tests
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        environment: test
+        strategy:
+            matrix:
+                node-version: [21]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Set up Node.js ${{matrix.node-version}}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{matrix.node-version}}
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate prisma client schema
+              run: pnpm exec prisma generate
+
+            - name: Lint
+              run: pnpm lint
+
+            - name: Run unit tests
+              run: pnpm test
+
+            - name: Run E2E tests
+              run: pnpm test:e2e
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  DIRECT_URL: ${{ secrets.DIRECT_URL }}
