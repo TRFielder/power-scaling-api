@@ -35,6 +35,10 @@ export class SupabaseService {
             )
         }
 
+        this.logger.log(
+            `Signed URL generated for filename: ${fileName}, URL is ${data.signedUrl}`
+        )
+
         return data.signedUrl
     }
 
