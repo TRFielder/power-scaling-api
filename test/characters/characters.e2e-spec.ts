@@ -5,7 +5,6 @@ import { AppModule } from "../../src/app.module"
 import { PrismaService } from "../../src/prisma/prisma.service"
 import { Character } from "@prisma/client"
 import { CharactersService } from "../../src/characters/characters.service"
-import { SupabaseService } from "../../src/supabase/supabase.service"
 import { unlinkSync, writeFileSync } from "node:fs"
 import { faker } from "@faker-js/faker"
 
