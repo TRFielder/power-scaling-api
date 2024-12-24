@@ -16,6 +16,7 @@ import { Character } from "@prisma/client"
 import { ApiBody, ApiConsumes, ApiOperation } from "@nestjs/swagger"
 import { CreateCharacterDto } from "./dto/create-character.dto"
 import { FileInterceptor } from "@nestjs/platform-express"
+import { CharacterDto } from "./dto/character.dto"
 
 @Controller("characters")
 export class CharactersController {
@@ -23,13 +24,13 @@ export class CharactersController {
 
     @Get()
     @ApiOperation({ summary: "Get all characters without sorting" })
-    async getAllCharacters(): Promise<Character[]> {
+    async getAllCharacters(): Promise<CharacterDto[]> {
         return this.characterService.getAllCharacters()
     }
 
     @Get("sorted")
     @ApiOperation({ summary: "Get all characters sorted by descending score" })
-    async getCharactersOrderedByScore(): Promise<Character[]> {
+    async getCharactersOrderedByScore(): Promise<CharacterDto[]> {
         return this.characterService.getCharactersOrderedByScore()
     }
 
@@ -61,9 +62,9 @@ export class CharactersController {
                     HttpStatus.BAD_REQUEST
                 )
             // Upload image to supabase bucket
-            const imageUrl = await this.characterService.uploadImage(file)
+            const imageFileName = await this.characterService.uploadImage(file)
 
-            const characterWithImage = { ...character, imageUrl }
+            const characterWithImage = { ...character, imageFileName }
 
             return await this.characterService.addNewCharacter(
                 characterWithImage

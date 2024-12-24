@@ -5,6 +5,7 @@ import { Character } from "@prisma/client"
 import { PrismaModule } from "../prisma/prisma.module"
 import { CreateCharacterDto } from "./dto/create-character.dto"
 import { Readable } from "node:stream"
+import { CharacterDto } from "./dto/character.dto"
 
 describe("CharactersController", () => {
     let controller: CharactersController
@@ -30,7 +31,7 @@ describe("CharactersController", () => {
     })
 
     it("Should return an array of characters when calling get all characters", async () => {
-        const result: Character[] = [
+        const result: CharacterDto[] = [
             {
                 id: 1,
                 name: "Goku",
@@ -53,7 +54,7 @@ describe("CharactersController", () => {
     })
 
     it("Should return an array of characters when calling get characters ordered by score", async () => {
-        const result: Character[] = [
+        const result: CharacterDto[] = [
             {
                 id: 2,
                 name: "Gohan",
@@ -80,7 +81,7 @@ describe("CharactersController", () => {
         const result: Character = {
             id: 1,
             name: "Gohan",
-            imageUrl: "unittesturl",
+            imageFileName: "unittestfilename",
             score: 0,
         }
 

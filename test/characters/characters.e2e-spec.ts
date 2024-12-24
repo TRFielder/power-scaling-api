@@ -5,6 +5,7 @@ import { AppModule } from "../../src/app.module"
 import { PrismaService } from "../../src/prisma/prisma.service"
 import { Character } from "@prisma/client"
 import { CharactersService } from "../../src/characters/characters.service"
+import { SupabaseService } from "../../src/supabase/supabase.service"
 import { unlinkSync, writeFileSync } from "node:fs"
 import { faker } from "@faker-js/faker"
 
@@ -44,6 +45,17 @@ describe("Characters (e2e)", () => {
             "mock-image-url"
         )
 
+        jest.spyOn(characterService, "getImageForCharacter").mockImplementation(
+            async (character: Character) => {
+                return {
+                    id: character.id,
+                    name: character.name,
+                    score: character.score,
+                    imageUrl: "e2e-mock-url",
+                }
+            }
+        )
+
         await app.init()
 
         // Seed db with test data, just 3 entries
@@ -52,15 +64,15 @@ describe("Characters (e2e)", () => {
             data: [
                 {
                     name: "Goku",
-                    imageUrl: "test-url-1",
+                    imageFileName: "goku.png",
                 },
                 {
                     name: "Gohan",
-                    imageUrl: "test-url-2",
+                    imageFileName: "gohan.png",
                 },
                 {
                     name: "Vegeta",
-                    imageUrl: "test-url-3",
+                    imageFileName: "vegeta.png",
                 },
             ],
         })
@@ -108,7 +120,7 @@ describe("Characters (e2e)", () => {
                 // Expect status code 201
                 expect(status).toEqual(HttpStatus.CREATED)
                 expect(body).toHaveProperty("id")
-                expect(body).toHaveProperty("imageUrl", "mock-image-url")
+                expect(body).toHaveProperty("imageFileName", "mock-image-url")
                 expect(body).toHaveProperty("score", 0)
                 expect(characterService.uploadImage).toHaveBeenCalledTimes(1)
             } finally {

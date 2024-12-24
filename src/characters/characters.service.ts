@@ -1,34 +1,62 @@
-import {
-    HttpException,
-    HttpStatus,
-    Injectable,
-    Logger,
-    NotFoundException,
-} from "@nestjs/common"
+import { Injectable, Logger, NotFoundException } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { Character, Prisma } from "@prisma/client"
-import { createClient } from "@supabase/supabase-js"
-import { randomUUID } from "node:crypto"
+import { CharacterDto } from "./dto/character.dto"
+import { SupabaseService } from "src/supabase/supabase.service"
 
 @Injectable()
 export class CharactersService {
     private readonly logger = new Logger(CharactersService.name)
-    private readonly supabase = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_KEY
-    )
+    private readonly supabase: SupabaseService
     constructor(private readonly prisma: PrismaService) {}
 
-    async getAllCharacters(): Promise<Character[]> {
-        this.logger.log("Request made to get all characters")
-        return this.prisma.character.findMany()
+    async getImageForCharacter(character: Character): Promise<CharacterDto> {
+        this.logger.log(
+            "Generating signed image URL for filename",
+            character.imageFileName
+        )
+
+        const url = await this.supabase.getSignedUrl(
+            character.imageFileName,
+            10 * 60
+        )
+
+        return {
+            id: character.id,
+            name: character.name,
+            score: character.score,
+            imageUrl: url,
+        }
     }
 
-    async getCharactersOrderedByScore(): Promise<Character[]> {
+    async getAllCharacters(): Promise<CharacterDto[]> {
+        this.logger.log("Request made to get all characters")
+        const characters = await this.prisma.character.findMany()
+
+        const charactersWithSignedImageUrls: Promise<CharacterDto[]> =
+            Promise.all(
+                characters.map(async (character) =>
+                    this.getImageForCharacter(character)
+                )
+            )
+
+        return charactersWithSignedImageUrls
+    }
+
+    async getCharactersOrderedByScore(): Promise<CharacterDto[]> {
         this.logger.log("Request made to get characters ordered by score")
-        return this.prisma.character.findMany({
+        const characters = await this.prisma.character.findMany({
             orderBy: [{ score: "desc" }],
         })
+
+        const charactersWithSignedImageUrls: Promise<CharacterDto[]> =
+            Promise.all(
+                characters.map(async (character) =>
+                    this.getImageForCharacter(character)
+                )
+            )
+
+        return charactersWithSignedImageUrls
     }
 
     async addNewCharacter(
@@ -96,34 +124,6 @@ export class CharactersService {
 
     // Upload an image file for a character
     async uploadImage(file: Express.Multer.File) {
-        try {
-            // Generate a unique file name
-            const filename = `${randomUUID()}-${file.originalname}`
-
-            // Upload the file to the storage bucket
-            const { error } = await this.supabase.storage
-                .from(process.env.BUCKET_NAME)
-                .upload(filename, file.buffer, {
-                    contentType: file.mimetype,
-                })
-
-            if (error)
-                throw new HttpException(
-                    `Failed to upload file: ${error.message}`,
-                    HttpStatus.INTERNAL_SERVER_ERROR
-                )
-
-            // Retrieve the public URL of the uploaded file, and send it back to be added to the db
-            const response = this.supabase.storage
-                .from(process.env.BUCKET_NAME)
-                .getPublicUrl(filename)
-
-            return response.data.publicUrl
-        } catch (error) {
-            throw new HttpException(
-                `Upload failed: ${error.message}`,
-                HttpStatus.INTERNAL_SERVER_ERROR
-            )
-        }
+        return await this.supabase.uploadImage(file)
     }
 }
