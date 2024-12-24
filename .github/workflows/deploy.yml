@@ -1,0 +1,99 @@
+# Run unit tests and deploy on pushes to main
+name: CI/CD Pipeline
+
+on:
+    push:
+        branches:
+            - main # Trigger on pushes to the 'main' branch
+    pull_request:
+        branches:
+            - main # Trigger on pull requests to the 'main' branch
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        environment: test
+        strategy:
+            matrix:
+                node-version: [21]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Set up Node.js ${{matrix.node-version}}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{matrix.node-version}}
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate prisma client schema
+              run: pnpm exec prisma generate
+
+            - name: Lint
+              run: pnpm lint
+
+            - name: Run unit tests
+              run: pnpm test
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  DIRECT_URL: ${{ secrets.DIRECT_URL }}
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+            - name: Run E2E tests
+              run: pnpm test:e2e
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  DIRECT_URL: ${{ secrets.DIRECT_URL }}
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    # Job to deploy to Vercel
+    deploy:
+        needs: test # Only run if the tests pass
+        runs-on: ubuntu-latest
+        environment: deploy-dev
+        strategy:
+            matrix:
+                node-version: [21]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Set up Node.js ${{matrix.node-version}}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{matrix.node-version}}
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate prisma client schema
+              run: pnpm exec prisma generate
+
+            # Deploy to Vercel using the Vercel CLI
+            - name: Install Vercel CLI
+              run: pnpm add -g vercel
+
+            - name: Pull Vercel environment information
+              run: vercel pull --yes --environment=dev --token=${{secrets.VERCEL_TOKEN}}
+
+            - name: Deploy to Vercel
+              run: |
+                  pnpm add -g vercel
+                  vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }}
+              env:
+                  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+                  VERCEL_SCOPE: ${{ secrets.VERCEL_SCOPE }}
