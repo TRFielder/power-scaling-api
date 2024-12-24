@@ -1,14 +1,22 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common"
+import {
+    HttpException,
+    HttpStatus,
+    Injectable,
+    Logger,
+    NotFoundException,
+} from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { Character, Prisma } from "@prisma/client"
 import { CharacterDto } from "./dto/character.dto"
-import { SupabaseService } from "src/supabase/supabase.service"
+import { SupabaseService } from "../supabase/supabase.service"
 
 @Injectable()
 export class CharactersService {
     private readonly logger = new Logger(CharactersService.name)
-    private readonly supabase: SupabaseService
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly supabase: SupabaseService
+    ) {}
 
     async getImageForCharacter(character: Character): Promise<CharacterDto> {
         this.logger.log(
@@ -124,6 +132,16 @@ export class CharactersService {
 
     // Upload an image file for a character
     async uploadImage(file: Express.Multer.File) {
-        return await this.supabase.uploadImage(file)
+        this.logger.log(
+            `Attempting to upload an image with name: ${file.originalname}`
+        )
+        try {
+            return await this.supabase.uploadImage(file)
+        } catch (error) {
+            this.logger.error(
+                `Error calling uploadImage from character service: ${error}`
+            )
+            throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

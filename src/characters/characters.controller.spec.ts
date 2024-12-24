@@ -6,6 +6,7 @@ import { PrismaModule } from "../prisma/prisma.module"
 import { CreateCharacterDto } from "./dto/create-character.dto"
 import { Readable } from "node:stream"
 import { CharacterDto } from "./dto/character.dto"
+import { SupabaseModule } from "../supabase/supabase.module"
 
 describe("CharactersController", () => {
     let controller: CharactersController
@@ -13,7 +14,7 @@ describe("CharactersController", () => {
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
-            imports: [PrismaModule],
+            imports: [PrismaModule, SupabaseModule],
             controllers: [CharactersController],
             providers: [CharactersService],
         }).compile()

@@ -17,7 +17,10 @@ export class SupabaseService {
     }
 
     // Function to get a signed URL for a file stored in Supabase Storage
-    async getSignedUrl(fileName: string, expiryTimeSeconds): Promise<string> {
+    async getSignedUrl(
+        fileName: string,
+        expiryTimeSeconds: number
+    ): Promise<string> {
         this.logger.log("Generating signed image URL for filename", fileName)
 
         const { data, error } = await this.supabase.storage
@@ -37,6 +40,9 @@ export class SupabaseService {
 
     async uploadImage(file: Express.Multer.File) {
         try {
+            this.logger.log(
+                `Attempting to upload an image with name: ${file.originalname}, size is ${file.size}`
+            )
             // Generate a unique file name
             const filename = `${randomUUID()}-${file.originalname}`
             const { error } = await this.supabase.storage
