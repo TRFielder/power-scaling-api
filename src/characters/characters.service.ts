@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common"
 import { PrismaService } from "../prisma/prisma.service"
 import { Character, Prisma } from "@prisma/client"
-import { CharacterDto } from "./dto/character.dto"
+import { CharacterDto, NewCharacterDto } from "./dto/character.dto"
 import { SupabaseService } from "../supabase/supabase.service"
 
 @Injectable()
@@ -106,7 +106,7 @@ export class CharactersService {
 
     async addNewCharacter(
         data: Prisma.CharacterCreateInput
-    ): Promise<Character> {
+    ): Promise<NewCharacterDto> {
         this.logger.log(
             `Request made to create a character with details ${JSON.stringify(data)}`
         )
