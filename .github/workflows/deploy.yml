@@ -3,11 +3,8 @@ name: CI/CD Pipeline
 
 on:
     push:
-        branches:
-            - main # Trigger on pushes to the 'main' branch
-    pull_request:
-        branches:
-            - main # Trigger on pull requests to the 'main' branch
+        tags:
+            - "v*" # Trigger on tags made with format "v1.0" etc
 
 jobs:
     test:
@@ -55,7 +52,7 @@ jobs:
                   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
                   SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-    # Job to deploy to Vercel
+    # Job to deploy to Render
     deploy:
         needs: test # Only run if the tests pass
         runs-on: ubuntu-latest
@@ -66,34 +63,8 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Install pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 9
-
-            - name: Set up Node.js ${{matrix.node-version}}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{matrix.node-version}}
-                  cache: pnpm
-
-            - name: Install dependencies
-              run: pnpm install
-
-            - name: Generate prisma client schema
-              run: pnpm exec prisma generate
-
-            # Deploy to Vercel using the Vercel CLI
-            - name: Install Vercel CLI
-              run: pnpm add -g vercel
-
-            - name: Pull Vercel environment information
-              run: vercel pull --yes --environment=dev --token=${{secrets.VERCEL_TOKEN}}
-
-            - name: Deploy to Vercel
-              run: |
-                  pnpm add -g vercel
-                  vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }}
+              # Deploy to Render by calling the deploy hook URL if the tests have passed
+            - name: Deploy to Render
+              run: curl "$DEPLOY_HOOK"
               env:
-                  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-                  VERCEL_SCOPE: ${{ secrets.VERCEL_SCOPE }}
+                  DEPLOY_HOOK: ${{ secrets.DEPLOY_HOOK }}
