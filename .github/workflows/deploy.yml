@@ -1,0 +1,70 @@
+# Run unit tests and deploy on pushes to main
+name: CI/CD Pipeline
+
+on:
+    push:
+        tags:
+            - "v*" # Trigger on tags made with format "v1.0" etc
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        environment: test
+        strategy:
+            matrix:
+                node-version: [21]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
+
+            - name: Set up Node.js ${{matrix.node-version}}
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{matrix.node-version}}
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Generate prisma client schema
+              run: pnpm exec prisma generate
+
+            - name: Lint
+              run: pnpm lint
+
+            - name: Run unit tests
+              run: pnpm test
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  DIRECT_URL: ${{ secrets.DIRECT_URL }}
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+            - name: Run E2E tests
+              run: pnpm test:e2e
+              env:
+                  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                  DIRECT_URL: ${{ secrets.DIRECT_URL }}
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    # Job to deploy to Render
+    deploy:
+        needs: test # Only run if the tests pass
+        runs-on: ubuntu-latest
+        environment: deploy-dev
+        strategy:
+            matrix:
+                node-version: [21]
+        steps:
+            - uses: actions/checkout@v4
+
+              # Deploy to Render by calling the deploy hook URL if the tests have passed
+            - name: Deploy to Render
+              run: curl "$DEPLOY_HOOK"
+              env:
+                  DEPLOY_HOOK: ${{ secrets.DEPLOY_HOOK }}
